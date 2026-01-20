@@ -2,51 +2,6 @@
 
 This plugin provides tools for code execution in Daytona sandboxed environments,
 with lifecycle hooks for monitoring and customization.
-
-Usage with App (recommended):
-    from google.adk.agents import Agent
-    from google.adk.apps import App
-    from google.adk.runners import Runner
-    from google.adk.sessions import InMemorySessionService
-    from daytona_adk import DaytonaPlugin
-
-    plugin = DaytonaPlugin()
-    agent = Agent(
-        model="gemini-2.0-flash",
-        name="agent_with_sandbox",
-        tools=plugin.get_tools(),
-    )
-
-    app = App(
-        name="my_app",
-        root_agent=agent,
-        plugins=[plugin],
-    )
-
-    runner = Runner(
-        app=app,
-        session_service=InMemorySessionService(),
-    )
-
-Usage with Runner directly:
-    from google.adk.agents import Agent
-    from google.adk.runners import Runner
-    from google.adk.sessions import InMemorySessionService
-    from daytona_adk import DaytonaPlugin
-
-    plugin = DaytonaPlugin()
-    agent = Agent(
-        model="gemini-2.0-flash",
-        name="agent_with_sandbox",
-        tools=plugin.get_tools(),
-    )
-
-    runner = Runner(
-        app_name="my_app",
-        agent=agent,
-        plugins=[plugin],
-        session_service=InMemorySessionService(),
-    )
 """
 
 from typing import Any, Dict, Optional
@@ -111,7 +66,6 @@ class DaytonaPlugin(BasePlugin):
             auto_delete_interval=auto_delete_interval,
         )
         self._sandbox = self._daytona.create(params)
-        print(self._sandbox)
 
     def get_tools(self) -> list[BaseTool]:
         """Get all Daytona tools with shared sandbox instance."""
@@ -149,7 +103,6 @@ class DaytonaPlugin(BasePlugin):
         tool_context: ToolContext,
     ) -> Optional[Dict[str, Any]]:
         """Called before a tool is executed."""
-        # print(f"Tool {tool.name} call")
         return None
 
     async def after_tool_callback(
@@ -162,9 +115,7 @@ class DaytonaPlugin(BasePlugin):
     ) -> Optional[Dict[str, Any]]:
         """Called after a tool is executed."""
         # Check for errors in the result
-        # print(f"Tool {tool.name} call result: {result}")
         if "error" in result:
-            print(f"Tool {tool.name} failed: {result['error']}")
             self.destroy_sandbox()
         return None
 
