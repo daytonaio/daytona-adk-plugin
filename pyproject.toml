@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "daytona-adk"
 version = "0.1.0"
-description = "Daytona plugin for Google ADK - Automated development environments integration"
+description = "Daytona plugin for Google ADK"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 authors = [
-    {name = "Daytona", email = "hello@daytona.io"}
+    {name = "Mislav Ivanda", email = "mivanda@daytona.io"}
 ]
-keywords = ["adk", "daytona", "development-environment", "plugin"]
+keywords = ["adk", "daytona", "sandbox", "plugin"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
