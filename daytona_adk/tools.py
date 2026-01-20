@@ -304,7 +304,7 @@ class StartLongRunningCommandTool(BaseTool):
             timeout = args.get("timeout")
             session_id = f"long-running-{id(self)}"
             self.sandbox.process.create_session(session_id)
-            request = SessionExecuteRequest(command=command)
+            request = SessionExecuteRequest(command=command, runAsync=True)
             response = self.sandbox.process.execute_session_command(
                 session_id, request, timeout
             )
