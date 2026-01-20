@@ -208,14 +208,18 @@ See the [examples/](examples/) directory for complete working examples:
 ```
 daytona-adk-plugin/
 ├── daytona_adk/
-│   ├── __init__.py      # Package exports
-│   ├── plugin.py        # DaytonaPlugin (extends BasePlugin)
-│   └── tools.py         # ADK tool implementations
+│   ├── __init__.py           # Package exports
+│   ├── plugin.py             # DaytonaPlugin (extends BasePlugin)
+│   └── tools.py              # ADK tool implementations
 ├── examples/
-│   ├── with_app.py      # App pattern example
-│   └── with_runner.py   # Runner pattern example
+│   ├── patterns/
+│   │   ├── with_app.py       # App pattern example
+│   │   └── with_runner.py    # Runner pattern example
+│   ├── multi_language_execution.py  # Multi-language code execution
+│   ├── file_operations.py           # Script upload and file reading
+│   └── long_running_process.py      # Background process management
 ├── tests/
-│   └── test_tools.py    # Tool unit tests
+│   └── test_tools.py         # Tool unit tests
 └── pyproject.toml
 ```
 
