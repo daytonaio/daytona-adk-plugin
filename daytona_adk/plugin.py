@@ -4,7 +4,11 @@ This plugin provides tools for code execution in Daytona sandboxed environments,
 with lifecycle hooks for monitoring and customization.
 """
 
+import logging
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
+
 from google.adk.agents.base_agent import BaseAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.plugins import BasePlugin
@@ -66,6 +70,7 @@ class DaytonaPlugin(BasePlugin):
             auto_delete_interval=auto_delete_interval,
         )
         self._sandbox = self._daytona.create(params)
+        logger.debug(f"Daytona sandbox created: {self._sandbox.id}")
 
     def get_tools(self) -> list[BaseTool]:
         """Get all Daytona tools with shared sandbox instance."""
@@ -103,6 +108,7 @@ class DaytonaPlugin(BasePlugin):
         tool_context: ToolContext,
     ) -> Optional[Dict[str, Any]]:
         """Called before a tool is executed."""
+        logger.debug(f"Before tool: {tool.name}")
         return None
 
     async def after_tool_callback(
@@ -114,8 +120,10 @@ class DaytonaPlugin(BasePlugin):
         result: Dict[str, Any],
     ) -> Optional[Dict[str, Any]]:
         """Called after a tool is executed."""
+        logger.debug(f"After tool: {tool.name}")
         # Check for errors in the result
         if "error" in result:
+            logger.warning(f"Tool {tool.name} returned error: {result['error']}")
             self.destroy_sandbox()
         return None
 
@@ -123,12 +131,12 @@ class DaytonaPlugin(BasePlugin):
         """Destroy the Daytona sandbox."""
         if self._sandbox:
             try:
-                print("Deleting Daytona sandbox...")
+                logger.info("Deleting Daytona sandbox...")
                 self._daytona.delete(self._sandbox)
                 self._sandbox = None
-                print("Daytona sandbox deleted.")
+                logger.info("Daytona sandbox deleted.")
             except Exception as e:
-                print(f"Error deleting Daytona sandbox: {str(e)}")
+                logger.error(f"Error deleting Daytona sandbox: {e}")
 
     async def close(self) -> None:
         """Clean up the Daytona sandbox."""

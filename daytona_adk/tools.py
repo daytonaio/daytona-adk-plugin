@@ -3,7 +3,11 @@
 Provides ADK tool implementations for code execution in Daytona sandbox.
 """
 
+import logging
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
+
 from daytona import CodeRunParams, Sandbox, SessionExecuteRequest  # type: ignore
 from google.adk.tools import BaseTool, ToolContext
 from google.genai import types
@@ -64,18 +68,21 @@ class ExecuteCodeTool(BaseTool):
         tool_context: ToolContext,
     ) -> Dict[str, Any]:
         """Execute code inside the Daytona sandbox."""
-        try:
-            code = args.get("code", "")
-            language = args.get("language", "python").lower()
-            env = args.get("env")
-            argv = args.get("argv")
-            timeout = args.get("timeout")
+        code = args.get("code", "")
+        language = args.get("language", "python").lower()
+        env = args.get("env")
+        argv = args.get("argv")
+        timeout = args.get("timeout")
 
+        logger.debug(f"Executing {language} code (length: {len(code)} chars)")
+
+        try:
             if language == "python":
                 params: Optional[CodeRunParams] = None
                 if env or argv:
                     params = CodeRunParams(env=env, argv=argv)
                 response = self.sandbox.process.code_run(code, params, timeout)
+                logger.debug(f"Code execution completed with exit_code: {response.exit_code}")
                 return {"result": response.result, "exit_code": response.exit_code}
 
             elif language in ("javascript", "typescript"):
@@ -98,12 +105,15 @@ class ExecuteCodeTool(BaseTool):
 
                 response = self.sandbox.process.exec(cmd, env=env, timeout=timeout)
                 self.sandbox.fs.delete_file(script_path)
+                logger.debug(f"Code execution completed with exit_code: {response.exit_code}")
                 return {"result": response.result, "exit_code": response.exit_code}
 
             else:
+                logger.warning(f"Unsupported language requested: {language}")
                 return {"error": f"Unsupported language: {language}", "exit_code": -1}
 
         except Exception as e:
+            logger.error(f"Code execution failed: {e}")
             return {"error": str(e), "exit_code": -1}
 
 
@@ -154,15 +164,19 @@ class ExecuteCommandTool(BaseTool):
         tool_context: ToolContext,
     ) -> Dict[str, Any]:
         """Execute a command inside the Daytona sandbox."""
-        try:
-            command = args.get("command", "")
-            cwd = args.get("cwd")
-            env = args.get("env")
-            timeout = args.get("timeout")
+        command = args.get("command", "")
+        cwd = args.get("cwd")
+        env = args.get("env")
+        timeout = args.get("timeout")
 
+        logger.debug(f"Executing command: {command[:100]}{'...' if len(command) > 100 else ''}")
+
+        try:
             response = self.sandbox.process.exec(command, cwd, env, timeout)
+            logger.debug(f"Command completed with exit_code: {response.exit_code}")
             return {"result": response.result, "exit_code": response.exit_code}
         except Exception as e:
+            logger.error(f"Command execution failed: {e}")
             return {"error": str(e), "exit_code": -1}
 
 
@@ -205,13 +219,18 @@ class UploadFileTool(BaseTool):
         tool_context: ToolContext,
     ) -> Dict[str, Any]:
         """Upload a file to the Daytona sandbox."""
+        file_path = args.get("file_path", "")
+        content = args.get("content", "")
+
+        logger.debug(f"Uploading file to: {file_path} (size: {len(content)} bytes)")
+
         try:
-            file_path = args.get("file_path", "")
-            content = args.get("content", "")
             content_bytes = content.encode("utf-8")
             self.sandbox.fs.upload_file(content_bytes, file_path)
+            logger.debug(f"File uploaded successfully: {file_path}")
             return {"success": True, "path": file_path}
         except Exception as e:
+            logger.error(f"File upload failed for {file_path}: {e}")
             return {"error": str(e), "success": False}
 
 
@@ -248,12 +267,17 @@ class ReadFileTool(BaseTool):
         tool_context: ToolContext,
     ) -> Dict[str, Any]:
         """Read a file from the Daytona sandbox."""
+        file_path = args.get("file_path", "")
+
+        logger.debug(f"Reading file: {file_path}")
+
         try:
-            file_path = args.get("file_path", "")
             content_bytes = self.sandbox.fs.download_file(file_path)
             content = content_bytes.decode("utf-8")
+            logger.debug(f"File read successfully: {file_path} (size: {len(content)} bytes)")
             return {"content": content, "path": file_path}
         except Exception as e:
+            logger.error(f"File read failed for {file_path}: {e}")
             return {"error": str(e), "content": None}
 
 
@@ -299,19 +323,24 @@ class StartLongRunningCommandTool(BaseTool):
         tool_context: ToolContext,
     ) -> Dict[str, Any]:
         """Start a long-running command."""
+        command = args.get("command", "")
+        timeout = args.get("timeout")
+        session_id = f"long-running-{id(self)}"
+
+        logger.debug(f"Starting long-running command: {command[:100]}{'...' if len(command) > 100 else ''}")
+
         try:
-            command = args.get("command", "")
-            timeout = args.get("timeout")
-            session_id = f"long-running-{id(self)}"
             self.sandbox.process.create_session(session_id)
             request = SessionExecuteRequest(command=command, runAsync=True)
             response = self.sandbox.process.execute_session_command(
                 session_id, request, timeout
             )
+            logger.debug(f"Long-running command started with session_id: {session_id}")
             return {
                 "session_id": session_id,
                 "output": response.output if response.output else "",
                 "exit_code": response.exit_code,
             }
         except Exception as e:
+            logger.error(f"Failed to start long-running command: {e}")
             return {"error": str(e), "exit_code": -1}
