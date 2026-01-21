@@ -121,10 +121,20 @@ class DaytonaPlugin(BasePlugin):
     ) -> Optional[Dict[str, Any]]:
         """Called after a tool is executed."""
         logger.debug(f"After tool: {tool.name}")
-        # Check for errors in the result
         if "error" in result:
             logger.warning(f"Tool {tool.name} returned error: {result['error']}")
-            self.destroy_sandbox()
+        return None
+
+    async def on_tool_error_callback(
+        self,
+        *,
+        tool: BaseTool,
+        tool_args: Dict[str, Any],
+        tool_context: ToolContext,
+        error: Exception,
+    ) -> Optional[Dict[str, Any]]:
+        """Called when a tool raises an uncaught exception."""
+        logger.error(f"Tool {tool.name} raised uncaught exception: {error}")
         return None
 
     def destroy_sandbox(self) -> None:
