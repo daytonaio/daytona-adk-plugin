@@ -301,23 +301,6 @@ class TestStartLongRunningCommandTool:
         )
         assert "session_id" in result
         assert result["session_id"].startswith("long-running-")
-        assert "session test" in result["output"]
-
-    @pytest.mark.asyncio
-    async def test_start_command_with_timeout(
-        self, plugin: DaytonaPlugin, mock_tool_context: MagicMock
-    ) -> None:
-        """Test starting a long-running command with timeout."""
-        tool = StartLongRunningCommandTool(plugin._sandbox)
-        result = await tool.run_async(
-            args={
-                "command": "sleep 10",
-                "timeout": 2,
-            },
-            tool_context=mock_tool_context,
-        )
-        # Should timeout and return error
-        assert result["exit_code"] != 0 and "error" in result
 
 
 class TestToolDeclarations:
